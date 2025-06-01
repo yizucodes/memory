@@ -2,6 +2,7 @@
 --extra-index-url https://gitlab.com/api/v4/projects/54902696/packages/pypi/simple
 webai_element_utils==0.1.2
 webai_element_sdk
-openai-whisper
-opencv-python
-numpy
+openai-whisper>=20231117
+opencv-python>=4.8.0
+numpy>=1.24.0
+requests>=2.31.0

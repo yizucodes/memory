@@ -78,7 +78,7 @@ class Settings(ElementSettings):
         name="enable_frame_extraction",
         display_name="Enable Frame Extraction",
         description="Enable extraction of video frames.",
-        default=True,
+        default=False,
     )
     frame_rate = NumberSetting[int](
         name="frame_rate",
@@ -113,8 +113,8 @@ element = Element(
     id=UUID("8e6ecf76-4de7-46d5-8f0c-3053b65a8db3"),
     name="custom_video_processor",
     display_name="Video Audio Processor",
-    description="Processes videos and images with audio transcription and frame extraction for AI analysis",
-    version="2.3.0",
+    description="Processes videos for transcription and images from directory for AI analysis",
+    version="3.0.0",
     settings=Settings(),
     outputs=Outputs(),
 )
@@ -122,7 +122,31 @@ element = Element(
 
 def _transcribe_video(video_path: str, model_size: str = "base") -> str:
     """Transcribe video audio using OpenAI Whisper"""
+    import os
+    
     try:
+        # Set ffmpeg path for whisper - try both common locations
+        ffmpeg_paths = [
+            "/opt/homebrew/bin/ffmpeg",  # Homebrew default
+            "/Users/rutmehta/.local/bin/ffmpeg",  # User local
+            "/usr/local/bin/ffmpeg",  # Another common location
+        ]
+        
+        ffmpeg_path = None
+        for path in ffmpeg_paths:
+            if os.path.exists(path):
+                ffmpeg_path = path
+                break
+        
+        if ffmpeg_path:
+            logger.info(f"Using ffmpeg at: {ffmpeg_path}")
+            # Set environment variable for whisper to find ffmpeg
+            old_path = os.environ.get('PATH', '')
+            ffmpeg_dir = os.path.dirname(ffmpeg_path)
+            os.environ['PATH'] = f"{ffmpeg_dir}:{old_path}"
+        else:
+            logger.warning("Could not find ffmpeg, transcription may fail")
+        
         logger.info(f"Loading Whisper model '{model_size}'...")
         model = whisper.load_model(model_size)
         

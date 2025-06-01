@@ -84,9 +84,9 @@ class Outputs(ElementOutputs):
 element = Element(
     id=UUID("e54b5bf8-f954-4dba-a111-c45728c46e8e"),
     name="llama4",
-    version="0.0.4",
+    version="0.0.3",
     display_name="Llama4",
-    description="Llama4 API with media ingestion support",
+    description="Llama4 API with media ingestion support and batching",
     settings=Settings(),
     inputs=Inputs(),
     outputs=Outputs(),
@@ -103,6 +103,10 @@ class ChatEntry(TypedDict):
 
 
 chat_history: list[ChatEntry] = []
+
+# Batch storage for pending media items
+pending_media_batch = []
+MAX_ATTACHMENTS_PER_MESSAGE = 8  # Leave 1 slot for safety margin
 
 
 def image_to_base64(image_input):
@@ -129,9 +133,76 @@ def image_to_base64(image_input):
     raise ValueError("Invalid image input. Must be a dict with a 'url' key.")
 
 
+def _flush_media_batch():
+    """Flush current media batch to chat history"""
+    global pending_media_batch, chat_history
+    
+    if not pending_media_batch:
+        return
+    
+    # Group media items into batches respecting attachment limit
+    for i in range(0, len(pending_media_batch), MAX_ATTACHMENTS_PER_MESSAGE):
+        batch = pending_media_batch[i:i + MAX_ATTACHMENTS_PER_MESSAGE]
+        
+        # Create multimodal content for this batch
+        content = []
+        text_descriptions = []
+        
+        for media_item in batch:
+            if media_item["type"] == "transcript":
+                # Add transcript as text content
+                text_descriptions.append(f"[Video Transcript from {media_item['source_file']}]")
+                content.append({
+                    "type": "text",
+                    "text": f"[Video Transcript from {media_item['source_file']}]\n{media_item['transcript']}"
+                })
+            
+            elif media_item["type"] == "video_frame":
+                # Add video frame as image + text
+                text_descriptions.append(f"[Video frame {media_item['frame_index']} from {media_item['source_file']} at {media_item['timestamp']}s]")
+                content.append({
+                    "type": "text",
+                    "text": f"[Video frame {media_item['frame_index']} from {media_item['source_file']} at {media_item['timestamp']}s]"
+                })
+                content.append({
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/jpeg;base64,{media_item['image_base64']}"}
+                })
+            
+            elif media_item["type"] == "image":
+                # Add image as image + text
+                text_descriptions.append(f"[Image {media_item['image_index']} from {media_item['source_directory']}]")
+                content.append({
+                    "type": "text",
+                    "text": f"[Image {media_item['image_index']} from {media_item['source_directory']}]"
+                })
+                content.append({
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/jpeg;base64,{media_item['image_base64']}"}
+                })
+        
+        # Add batch summary as text at the beginning
+        batch_summary = f"[Media Batch: {', '.join(text_descriptions)}]"
+        content.insert(0, {
+            "type": "text", 
+            "text": batch_summary
+        })
+        
+        # Add batched message to chat history
+        chat_history.append({
+            "role": "user",
+            "content": content
+        })
+        
+        logger.info(f"Added media batch with {len(batch)} items to chat history")
+    
+    # Clear the batch
+    pending_media_batch.clear()
+
+
 def _ingest_media_data(input_frame: Frame):
-    """Ingest media data from the video audio processor and add to chat history"""
-    global chat_history
+    """Ingest media data from the video audio processor and batch for chat history"""
+    global pending_media_batch
     
     other_data = input_frame.other_data
     media_type = other_data.get("media_type")
@@ -141,13 +212,15 @@ def _ingest_media_data(input_frame: Frame):
         source_file = other_data.get("source_file", "")
         whisper_model = other_data.get("whisper_model", "")
         
-        # Add transcript to chat history as user message
-        chat_history.append({
-            "role": "user",
-            "content": f"[Video Transcript from {source_file}]\n{transcript}"
+        # Add to pending batch
+        pending_media_batch.append({
+            "type": "transcript",
+            "transcript": transcript,
+            "source_file": source_file,
+            "whisper_model": whisper_model
         })
         
-        logger.info(f"Added transcript from {source_file} to chat history: {len(transcript)} characters")
+        logger.info(f"Added transcript from {source_file} to pending batch: {len(transcript)} characters")
         
     elif media_type == "video_frame":
         frame_data = other_data.get("frame_data", {})
@@ -155,44 +228,39 @@ def _ingest_media_data(input_frame: Frame):
         frame_index = other_data.get("frame_index", 0)
         timestamp = frame_data.get("timestamp", 0)
         
-        # Add video frame to chat history as user message with multimodal content
-        chat_history.append({
-            "role": "user",
-            "content": [
-                {
-                    "type": "text",
-                    "text": f"[Video frame {frame_index} from {source_file} at {timestamp}s]"
-                },
-                {
-                    "type": "image_url",
-                    "image_url": {"url": f"data:image/jpeg;base64,{frame_data.get('image_base64', '')}"}
-                }
-            ]
+        # Add to pending batch
+        pending_media_batch.append({
+            "type": "video_frame",
+            "image_base64": frame_data.get("image_base64", ""),
+            "source_file": source_file,
+            "frame_index": frame_index,
+            "timestamp": timestamp
         })
         
-        logger.info(f"Added video frame {frame_index} from {source_file} to chat history")
+        logger.info(f"Added video frame {frame_index} from {source_file} to pending batch")
         
     elif media_type == "image_file":
         image_base64 = other_data.get("image_base64", "")
         source_directory = other_data.get("source_directory", "")
         image_index = other_data.get("image_index", 0)
         
-        # Add image to chat history as user message with multimodal content
-        chat_history.append({
-            "role": "user", 
-            "content": [
-                {
-                    "type": "text",
-                    "text": f"[Image {image_index} from {source_directory}]"
-                },
-                {
-                    "type": "image_url",
-                    "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}
-                }
-            ]
+        # Add to pending batch
+        pending_media_batch.append({
+            "type": "image",
+            "image_base64": image_base64,
+            "source_directory": source_directory,
+            "image_index": image_index
         })
         
-        logger.info(f"Added image {image_index} from {source_directory} to chat history")
+        logger.info(f"Added image {image_index} from {source_directory} to pending batch")
+    
+    # Check if we need to flush the batch
+    # Count image attachments in current batch
+    image_count = sum(1 for item in pending_media_batch if item["type"] in ["video_frame", "image"])
+    
+    if image_count >= MAX_ATTACHMENTS_PER_MESSAGE:
+        logger.info(f"Batch size reached limit ({image_count} images), flushing to chat history")
+        _flush_media_batch()
 
 
 @element.startup
@@ -216,7 +284,7 @@ async def startup(ctx: Context[Inputs, Outputs, Settings]):
 
 @element.executor
 async def llm_inference(ctx: Context[Inputs, Outputs, Settings]):
-    global model, model_value, chat_history
+    global model, model_value, chat_history, pending_media_batch
 
     use_chat_history = ctx.settings.chat_history.value
     input_frame = ctx.inputs.in1.value
@@ -226,6 +294,11 @@ async def llm_inference(ctx: Context[Inputs, Outputs, Settings]):
         _ingest_media_data(input_frame)
         # Don't yield any response for media ingestion
         return
+    
+    # Flush any pending media batch before processing user query
+    if pending_media_batch:
+        logger.info("Flushing pending media batch before user query")
+        _flush_media_batch()
     
     # Only process API messages for actual LLM inference
     api_messages = input_frame.other_data.get("api", [])
@@ -279,6 +352,7 @@ async def llm_inference(ctx: Context[Inputs, Outputs, Settings]):
     max_context_messages = 50  # Adjust based on your needs
     if len(current_history) > max_context_messages:
         current_history = current_history[-max_context_messages:]
+        logger.info(f"Trimmed chat history to last {max_context_messages} messages")
 
     logger.info("Prompt to model:\n" + str(current_history))
 
