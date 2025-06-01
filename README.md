@@ -1,266 +1,258 @@
-# Video AI Analysis System
+# 🎬 Video Analysis System for WebAI Navigator
 
-A complete video analysis system that extracts frames and transcribes audio for multimodal AI analysis using Llama Vision models and Whisper speech recognition.
+A multimodal AI video analysis system that extracts frames, transcribes audio, and performs intelligent analysis using Llama 4 models. Built for hackathon demos and WebAI Navigator integration.
 
-## Features
+## 🚀 Features
 
-### 🎬 Video Frame Extraction
-- ✅ **Extracts frames** at configurable intervals (default: every 20 seconds)
-- ✅ **Converts to base64** format for Llama Vision integration
-- ✅ **Auto-resizes** large frames for efficiency (1920x1080 → 1280x720)
-- ✅ **Metadata included** (timestamps, frame numbers, dimensions)
+- **🖼️ Frame Extraction**: Extract video frames at custom intervals using OpenCV
+- **🎵 Audio Transcription**: Transcribe video audio using OpenAI Whisper
+- **🤖 Multimodal AI Analysis**: Analyze both visual and audio content with Llama 4
+- **📊 Multiple Analysis Modes**: Comprehensive, overview, frames-only, or transcript-only
+- **🔒 Secure API Management**: Environment-based API key configuration
+- **📁 Dual Output**: Human-readable text + machine-readable JSON results
+- **🔧 WebAI Navigator Ready**: Pre-configured for visual workflow integration
 
-### 🎵 Audio Transcription  
-- ✅ **Speech-to-text** using OpenAI Whisper models
-- ✅ **Multiple formats** supported (MP4, MOV, AVI, MKV, WebM)
-- ✅ **No authentication** required (simplified setup)
-- ✅ **Timestamps included** for each segment
+## 🛠️ Installation
 
-## Quick Start
+### Prerequisites
 
-### 1. Install Dependencies
+1. **Python 3.8+**
+2. **FFmpeg** (required for Whisper audio processing):
+   ```bash
+   # macOS
+   brew install ffmpeg
+   
+   # Ubuntu/Debian
+   sudo apt install ffmpeg
+   
+   # Windows: Download from https://ffmpeg.org/
+   ```
+
+### Install Dependencies
+
 ```bash
-# Install required packages
 pip install -r requirements.txt
-
-# Additional for transcription
-pip install openai-whisper
 ```
 
-### 2. Test Both Features
+## ⚙️ Setup
 
-#### Extract Video Frames
+### 1. Configure API Key
+
+Create your environment file:
 ```bash
-# Test frame extraction with your video
-python test_video_extractor.py data/test.MOV
-
-# Expected output: Extracted 5 frames with timestamps
+cp .env.example .env
 ```
 
-#### Transcribe Video Audio
+Edit `.env` and add your Llama API key:
+```
+LLAMA4_API_KEY=your_api_key_here
+```
+
+### 2. Test API Connection
+
 ```bash
-# Basic transcription (recommended for demo)
-python transcribe_video.py data/test.MOV
+python -c "
+from openai import OpenAI
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
-# For better accuracy (slower)
-python transcribe_video.py data/test.MOV --model large
+client = OpenAI(
+    api_key=os.getenv('LLAMA4_API_KEY'),
+    base_url='https://api.llama.com/compat/v1/'
+)
 
-# Preview only (no file save)
-python transcribe_video.py data/test.MOV --nosave
+response = client.chat.completions.create(
+    model='Llama-4-Maverick-17B-128E-Instruct-FP8',
+    messages=[{'role': 'user', 'content': 'Hello!'}]
+)
+print('✅ API connection successful!')
+"
 ```
 
-### 3. Complete Multimodal Analysis
+## 🎯 Usage
+
+### Basic Commands
+
+**Quick transcript analysis:**
 ```bash
-# Get both visual frames and audio transcript
-python test_video_extractor.py data/test.MOV
-python transcribe_video.py data/test.MOV
-
-# Results:
-# - Frames with base64 images for visual analysis
-# - Text transcript for content analysis
+python llama_video_analyzer.py data/your_video.MOV --mode transcript_only
 ```
 
-## Usage Examples
+**Visual frame analysis:**
+```bash
+python llama_video_analyzer.py data/your_video.MOV --mode frames_only
+```
 
-### Real Test Results
-With our sample 43-second networking video:
-- **Frames**: 5 extracted (at 0s, 10s, 20s, 30s, 40s)
-- **Transcript**: Complete conversation with speaker turns
-- **Processing time**: ~30 seconds on MacBook Air
+**Complete multimodal analysis:**
+```bash
+python llama_video_analyzer.py data/your_video.MOV --mode comprehensive
+```
 
-### Sample Frame Output
+**Fast overview (recommended for demos):**
+```bash
+python llama_video_analyzer.py data/your_video.MOV --mode overview
+```
+
+### Advanced Options
+
+```bash
+python llama_video_analyzer.py <video_file> [options]
+
+Options:
+  --interval SECONDS     Frame extraction interval (default: 20)
+  --whisper MODEL        Whisper model: tiny,base,small,medium,large (default: base)
+  --mode MODE            Analysis mode: comprehensive,frames_only,transcript_only,overview
+  --output FILE          Output file prefix
+
+Examples:
+  # High-quality analysis
+  python llama_video_analyzer.py video.MOV --interval 10 --whisper medium
+  
+  # Quick demo mode
+  python llama_video_analyzer.py video.MOV --mode overview --interval 30
+  
+  # Custom output filename
+  python llama_video_analyzer.py video.MOV --output meeting_analysis
+```
+
+## 📊 Analysis Modes
+
+| Mode | Speed | API Calls | Use Case |
+|------|-------|-----------|----------|
+| **transcript_only** | ⚡ Fast | 1 | Text analysis, quick insights |
+| **overview** | 🚀 Medium | 1 | Demo-ready multimodal analysis |
+| **frames_only** | ⏱️ Medium | N frames | Visual-focused analysis |
+| **comprehensive** | 🔍 Detailed | N+2 calls | Complete research analysis |
+
+## 📁 Output Files
+
+Each analysis generates two files:
+
+- **`filename_llama_analysis.txt`** - Human-readable results
+- **`filename_llama_analysis.json`** - Machine-readable data
+
+### Sample Output Structure
+
 ```json
 {
-  "timestamp": 20.0,
-  "image_base64": "iVBORw0KGgoAAAANSUhE...",
-  "prompt": "Analyze this video frame at 20.0 seconds",
-  "frame_number": 554,
-  "size": {"width": 1280, "height": 720}
+  "video_path": "data/networking_video.MOV",
+  "frames_extracted": 5,
+  "transcript_length": 2196,
+  "analysis": {
+    "individual_frames": [...],
+    "comprehensive": "...",
+    "transcript_only": "..."
+  }
 }
 ```
 
-### Sample Transcript Output
-```text
-Hey, Marla, nice to meet you. Yeah, nice to meet you. I'm here today...
-I hear that Meta is working on some amazing new wearable devices...
-So we're trying to build really cool technology with wearables...
-```
+## 🏆 Hackathon Integration
 
-## WebAI Navigator Integration
+### Llama 4 Models Used
+- **Multimodal Analysis**: `Llama-4-Maverick-17B-128E-Instruct-FP8`
+- **Text Analysis**: `Llama-4-Maverick-17B-128E-Instruct-FP8`
+- **Context Window**: 128K tokens
+- **Capabilities**: Text + Image input, multimodal reasoning
 
-### Option A: Import Custom Element
-```bash
-# Check if WebAI CLI is available
-webai --help
+### WebAI Navigator
+- **Element Config**: `element_config.yaml` 
+- **Visual Workflow**: Drag-and-drop video analysis
+- **Integration**: Works standalone or in visual pipelines
 
-# Import the frame extractor element
-webai import video-frame-extractor ./
-```
-
-### Option B: Standalone Usage
-```python
-# Use directly in your Python code
-from video_frame_extractor_element import VideoFrameExtractorElement
-
-extractor = VideoFrameExtractorElement()
-frames = extractor.process("video.mp4", frame_interval_seconds=10)
-
-# Frames are ready for Llama Vision API
-for frame in frames:
-    llama_response = your_llm_api.analyze_image(
-        image_base64=frame["image_base64"],
-        prompt="What's happening in this video frame?"
-    )
-```
-
-### Flow Configuration in Navigator
-Create this visual flow:
-```
-[File Input] → [Video Frame Extractor] → [LLM Chat] → [Output Display]
-             ↓
-        [Audio Transcriber] → [Text Analysis] → [Combined Results]
-```
-
-## Command Reference
-
-### Frame Extraction Commands
-```bash
-# Basic usage
-python test_video_extractor.py <video_file>
-
-# Test with sample data
-python test_video_extractor.py data/test.MOV
-```
-
-### Transcription Commands
-```bash
-# Basic transcription
-python transcribe_video.py <video_file>
-
-# With specific model
-python transcribe_video.py <video_file> --model [tiny|base|small|medium|large]
-
-# No file output
-python transcribe_video.py <video_file> --nosave
-```
-
-### Model Selection Guide
-| Model | Size | Speed | Accuracy | Best For |
-|-------|------|-------|----------|----------|
-| `tiny` | 39MB | ⚡⚡⚡ | 70% | Quick tests |
-| `base` | 142MB | ⚡⚡ | 80% | **Demo (recommended)** |
-| `medium` | 769MB | ⚡ | 90% | Production |
-| `large` | 1.5GB | 🐌 | 95% | High accuracy needed |
-
-## File Structure
+## 🏗️ Architecture
 
 ```
-video-ai-analysis/
-├── video_frame_extractor_element.py  # Core frame extraction
-├── transcribe_video.py               # Audio transcription
-├── test_video_extractor.py          # Testing utilities
-├── element_config.yaml               # WebAI configuration
-├── requirements.txt                  # Dependencies
-├── data/                            # Test videos
-│   └── test.MOV
-├── transcripts/                     # Output transcripts
-│   └── videoNetworking_transcript.txt
-└── README.md                        # This file
+Video Input → [Frame Extractor] → Base64 Images
+            ↓
+          [Whisper] → Transcript
+            ↓
+         [Llama 4] → Analysis
+            ↓
+    [Output] → .txt + .json
 ```
 
-## Troubleshooting
+## 🔧 Technical Details
+
+### Frame Processing
+- **Resolution**: Auto-resize 1920x1080 → 1280x720
+- **Format**: JPEG with base64 encoding
+- **Timestamps**: Precise frame timing metadata
+- **Intervals**: Configurable extraction frequency
+
+### Audio Processing  
+- **Engine**: OpenAI Whisper (local processing)
+- **Models**: tiny, base, small, medium, large
+- **Formats**: Supports all major video formats
+- **Quality**: Automatic audio extraction via FFmpeg
+
+### AI Analysis
+- **Context**: Full transcript provided to each frame analysis
+- **Focus Areas**: Networking, meetings, professional communication
+- **Output**: Structured insights on dynamics, body language, effectiveness
+
+## 🚨 Troubleshooting
 
 ### Common Issues
 
-1. **"Video file not found"**
-   ```bash
-   # Check file exists
-   ls -la data/test.MOV
-   # Use absolute path
-   python test_video_extractor.py /full/path/to/video.mp4
-   ```
-
-2. **"Could not open video file"**
-   ```bash
-   # Check video format
-   ffmpeg -i data/test.MOV  # Should show video info
-   # Convert if needed
-   ffmpeg -i input.avi -c copy output.mp4
-   ```
-
-3. **Transcription model download fails**
-   ```bash
-   # Clear cache and retry
-   rm -rf ~/.cache/whisper
-   python transcribe_video.py data/test.MOV --model base
-   ```
-
-4. **Import errors**
-   ```bash
-   # Install missing dependencies
-   pip install opencv-python numpy openai-whisper
-   # Check Python version
-   python --version  # Should be 3.7+
-   ```
-
-### Performance Tips
-
-1. **For demos**: Use `base` model (fast, good enough)
-2. **For production**: Use `medium` model (good balance)
-3. **For best accuracy**: Use `large` model (slow but excellent)
-4. **GPU acceleration**: Models run 3-5x faster with CUDA/MPS
-
-## Integration Examples
-
-### With Llama Vision
-```python
-# Combine frame analysis with transcript
-frames = extractor.process("video.mp4")
-transcript = transcribe_video("video.mp4")
-
-# Send to Llama for multimodal analysis
-llama_input = {
-    "images": [frame["image_base64"] for frame in frames],
-    "text": transcript,
-    "prompt": "Analyze this video content using both visual and audio information"
-}
+**401 Authentication Error:**
+```bash
+# Check API key is loaded
+python -c "import os; from dotenv import load_dotenv; load_dotenv(); print('Key loaded:', bool(os.getenv('LLAMA4_API_KEY')))"
 ```
 
-### With Other AI Platforms
-- **Streamlit**: Build web interface for video uploads
-- **Jupyter**: Interactive analysis notebooks  
-- **FastAPI**: REST API for video processing
-- **Docker**: Containerized deployment
-
-## Advanced Configuration
-
-### Custom Frame Intervals
-```python
-# Extract every 5 seconds
-frames = extractor.process("video.mp4", frame_interval_seconds=5)
-
-# Extract every minute  
-frames = extractor.process("video.mp4", frame_interval_seconds=60)
+**500 Inference Error (too many frames):**
+```bash
+# Use fewer frames
+python llama_video_analyzer.py video.MOV --mode overview --interval 60
 ```
 
-### Video Metadata
-```python
-# Get detailed video information
-info = extractor.get_video_info("video.mp4")
-print(f"Duration: {info['duration_seconds']} seconds")
-print(f"FPS: {info['fps']}")
-print(f"Resolution: {info['width']}x{info['height']}")
+**FFmpeg Not Found:**
+```bash
+# Install FFmpeg first
+brew install ffmpeg  # macOS
+sudo apt install ffmpeg  # Linux
 ```
+
+**Whisper Model Download:**
+```bash
+# Models download automatically on first use
+# Ensure stable internet connection
+```
+
+## 📝 Example: Networking Video Analysis
+
+```bash
+# Analyze a networking conversation
+python llama_video_analyzer.py data/networking_call.MOV --mode comprehensive --whisper medium
+
+# Output: networking_call_llama_analysis.txt
+# - Conversation flow analysis
+# - Body language insights  
+# - Meeting effectiveness scores
+# - Professional communication assessment
+# - Networking outcome recommendations
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- **OpenAI Whisper** for speech-to-text capabilities
+- **Llama 4** for multimodal AI analysis  
+- **OpenCV** for video frame processing
+- **WebAI Navigator** for visual workflow integration
 
 ---
 
-## 🚀 Ready for Production!
-
-**Successfully tested with:**
-- ✅ 43-second networking conversation video
-- ✅ Frame extraction (5 frames at 10s intervals)
-- ✅ Audio transcription (complete conversation)
-- ✅ WebAI Navigator integration ready
-- ✅ macOS M1/M2 compatibility
-
-**Next steps:** Import to WebAI Navigator and build your multimodal AI flows! 🎯
+**Built for hackathons, optimized for insights! 🚀**
