@@ -1,6 +1,6 @@
-# 🎬 Video Analysis System for WebAI Navigator
+# 🎬 CLI Video Analysis System with Llama 4
 
-A multimodal AI video analysis system that extracts frames, transcribes audio, and performs intelligent analysis using Llama 4 models. Built for hackathon demos and WebAI Navigator integration.
+A command-line multimodal AI video analysis tool that extracts frames, transcribes audio, and performs intelligent analysis using Llama 4 models. Perfect for analyzing meetings, networking conversations, and professional interactions from the terminal.
 
 ## 🚀 Features
 
@@ -10,7 +10,7 @@ A multimodal AI video analysis system that extracts frames, transcribes audio, a
 - **📊 Multiple Analysis Modes**: Comprehensive, overview, frames-only, or transcript-only
 - **🔒 Secure API Management**: Environment-based API key configuration
 - **📁 Dual Output**: Human-readable text + machine-readable JSON results
-- **🔧 WebAI Navigator Ready**: Pre-configured for visual workflow integration
+- **⚡ CLI Interface**: Simple command-line tool with flexible options
 
 ## 🛠️ Installation
 
@@ -70,7 +70,7 @@ print('✅ API connection successful!')
 "
 ```
 
-## 🎯 Usage
+## 🎯 Command Line Usage
 
 ### Basic Commands
 
@@ -94,10 +94,13 @@ python llama_video_analyzer.py data/your_video.MOV --mode comprehensive
 python llama_video_analyzer.py data/your_video.MOV --mode overview
 ```
 
-### Advanced Options
+### Command Line Options
 
 ```bash
 python llama_video_analyzer.py <video_file> [options]
+
+Required:
+  video_file             Path to video file (MP4, MOV, AVI, etc.)
 
 Options:
   --interval SECONDS     Frame extraction interval (default: 20)
@@ -107,13 +110,16 @@ Options:
 
 Examples:
   # High-quality analysis
-  python llama_video_analyzer.py video.MOV --interval 10 --whisper medium
+  python llama_video_analyzer.py meeting.MOV --interval 10 --whisper medium
   
   # Quick demo mode
-  python llama_video_analyzer.py video.MOV --mode overview --interval 30
+  python llama_video_analyzer.py presentation.MP4 --mode overview --interval 30
   
   # Custom output filename
-  python llama_video_analyzer.py video.MOV --output meeting_analysis
+  python llama_video_analyzer.py interview.MOV --output job_interview_analysis
+  
+  # Transcript only for fast text analysis
+  python llama_video_analyzer.py call.MOV --mode transcript_only --whisper large
 ```
 
 ## 📊 Analysis Modes
@@ -132,6 +138,19 @@ Each analysis generates two files:
 - **`filename_llama_analysis.txt`** - Human-readable results
 - **`filename_llama_analysis.json`** - Machine-readable data
 
+### Sample CLI Workflow
+
+```bash
+# 1. Analyze networking video
+python llama_video_analyzer.py data/networking_call.MOV --mode comprehensive
+
+# 2. View results
+cat networking_call_llama_analysis.txt
+
+# 3. Process JSON data
+python -c "import json; data=json.load(open('networking_call_llama_analysis.json')); print(f'Frames: {data[\"frames_extracted\"]}, Transcript: {data[\"transcript_length\"]} chars')"
+```
+
 ### Sample Output Structure
 
 ```json
@@ -147,29 +166,16 @@ Each analysis generates two files:
 }
 ```
 
-## 🏆 Hackathon Integration
-
-### Llama 4 Models Used
-- **Multimodal Analysis**: `Llama-4-Maverick-17B-128E-Instruct-FP8`
-- **Text Analysis**: `Llama-4-Maverick-17B-128E-Instruct-FP8`
-- **Context Window**: 128K tokens
-- **Capabilities**: Text + Image input, multimodal reasoning
-
-### WebAI Navigator
-- **Element Config**: `element_config.yaml` 
-- **Visual Workflow**: Drag-and-drop video analysis
-- **Integration**: Works standalone or in visual pipelines
-
 ## 🏗️ Architecture
 
 ```
-Video Input → [Frame Extractor] → Base64 Images
-            ↓
-          [Whisper] → Transcript
-            ↓
-         [Llama 4] → Analysis
-            ↓
-    [Output] → .txt + .json
+CLI Command → Video Input → [Frame Extractor] → Base64 Images
+                          ↓
+                       [Whisper] → Transcript
+                          ↓
+                       [Llama 4] → Analysis
+                          ↓
+                      [Output] → .txt + .json files
 ```
 
 ## 🔧 Technical Details
@@ -193,7 +199,7 @@ Video Input → [Frame Extractor] → Base64 Images
 
 ## 🚨 Troubleshooting
 
-### Common Issues
+### Common CLI Issues
 
 **401 Authentication Error:**
 ```bash
@@ -214,31 +220,39 @@ brew install ffmpeg  # macOS
 sudo apt install ffmpeg  # Linux
 ```
 
-**Whisper Model Download:**
+**File Not Found:**
 ```bash
-# Models download automatically on first use
-# Ensure stable internet connection
+# Check video file path
+ls -la data/your_video.MOV
 ```
 
-## 📝 Example: Networking Video Analysis
+**Permission Issues:**
+```bash
+# Make script executable
+chmod +x llama_video_analyzer.py
+```
+
+## 📝 Example: CLI Analysis Workflow
 
 ```bash
-# Analyze a networking conversation
-python llama_video_analyzer.py data/networking_call.MOV --mode comprehensive --whisper medium
+# Step 1: Quick transcript check
+python llama_video_analyzer.py data/meeting.MOV --mode transcript_only
 
-# Output: networking_call_llama_analysis.txt
-# - Conversation flow analysis
-# - Body language insights  
-# - Meeting effectiveness scores
-# - Professional communication assessment
-# - Networking outcome recommendations
+# Step 2: If transcript looks good, run full analysis
+python llama_video_analyzer.py data/meeting.MOV --mode comprehensive --whisper medium
+
+# Step 3: Review results
+less meeting_llama_analysis.txt
+
+# Step 4: Extract specific data
+grep "Key insights" meeting_llama_analysis.txt
 ```
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
+3. Commit your changes (`git commit -m 'Add amazing CLI feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
@@ -251,8 +265,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **OpenAI Whisper** for speech-to-text capabilities
 - **Llama 4** for multimodal AI analysis  
 - **OpenCV** for video frame processing
-- **WebAI Navigator** for visual workflow integration
 
 ---
 
-**Built for hackathons, optimized for insights! 🚀**
+**Pure CLI power for video analysis! 🚀**
