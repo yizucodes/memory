@@ -71,6 +71,72 @@ print('✅ API connection successful!')
 "
 ```
 
+## 🚀 Quick Demo (No Setup Required)
+
+Try the interactive chat with real example data:
+
+### **Instant Demo - No Video Processing Needed**
+
+```bash
+# Test the interactive chat interface immediately
+python interactive_video_chat.py examples/videoNetworking_llama_analysis.json
+```
+
+This uses a pre-processed networking conversation analysis, so you can:
+- ✅ **Test the chat interface** without API setup
+- ✅ **See sample questions** and responses  
+- ✅ **Understand output format** before processing your own videos
+- ✅ **Demo the system** to others instantly
+
+### **Sample Chat Session**
+
+```bash
+$ python interactive_video_chat.py examples/videoNetworking_llama_analysis.json
+
+🎬 Video Analysis Chat - Ask me anything about the video!
+Commands: 'quit', 'exit', 'clear', 'context', 'help'
+============================================================
+
+💬 You: What were the main topics discussed?
+🤖 Llama: [Response based on the networking conversation analysis...]
+
+💬 You: What networking advice would you give?
+🤖 Llama: [Insights about the conversation effectiveness...]
+
+💬 You: help
+📚 Available Commands:
+- quit/exit/q: End the chat
+- clear: Clear conversation history  
+- context: Show video details
+- help: Show this help
+
+💡 Example Questions:
+- "What were the main topics discussed?"
+- "How did the participants' body language change?"
+- "What networking advice would you give?"
+- "Summarize the key insights"
+```
+
+### **Example Files Included**
+
+- **`examples/videoNetworking_llama_analysis.json`** - Complete analysis data for chat interface
+- **`examples/videoNetworking_llama_analysis.txt`** - Human-readable analysis results  
+- **`examples/videoNetworking_transcript.txt`** - Raw transcript for reference
+
+### **Try These Example Questions**
+
+```bash
+# Start the demo
+python interactive_video_chat.py examples/videoNetworking_llama_analysis.json
+
+# Try asking:
+"What were the main topics discussed?"
+"How effective was this networking conversation?"
+"What follow-up actions were mentioned?"
+"What could have been improved?"
+"Summarize the key insights from this conversation"
+```
+
 ## 🎯 Command Line Usage
 
 ### Basic Commands
