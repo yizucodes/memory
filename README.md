@@ -1,16 +1,17 @@
 # 🎬 CLI Video Analysis System with Llama 4
 
-A command-line multimodal AI video analysis tool that extracts frames, transcribes audio, and performs intelligent analysis using Llama 4 models. Perfect for analyzing meetings, networking conversations, and professional interactions from the terminal.
+A command-line multimodal AI video analysis tool that extracts frames, transcribes audio, and performs intelligent analysis using Llama 4 models. Features a two-step workflow: analyze videos then chat interactively about the results.
 
 ## 🚀 Features
 
 - **🖼️ Frame Extraction**: Extract video frames at custom intervals using OpenCV
 - **🎵 Audio Transcription**: Transcribe video audio using OpenAI Whisper
 - **🤖 Multimodal AI Analysis**: Analyze both visual and audio content with Llama 4
+- **💬 Interactive Chat**: Natural language querying of analysis results
 - **📊 Multiple Analysis Modes**: Comprehensive, overview, frames-only, or transcript-only
 - **🔒 Secure API Management**: Environment-based API key configuration
 - **📁 Dual Output**: Human-readable text + machine-readable JSON results
-- **⚡ CLI Interface**: Simple command-line tool with flexible options
+- **⚡ CLI Interface**: Simple command-line tools with flexible options
 
 ## 🛠️ Installation
 
@@ -240,21 +241,7 @@ python llama_video_analyzer.py data/meeting.MOV --mode transcript_only
 
 # Step 2: If transcript looks good, run full analysis
 python llama_video_analyzer.py data/meeting.MOV --mode comprehensive --whisper medium
-
-# Step 3: Review results
-less meeting_llama_analysis.txt
-
-# Step 4: Extract specific data
-grep "Key insights" meeting_llama_analysis.txt
 ```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing CLI feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
 
 ## 📄 License
 
